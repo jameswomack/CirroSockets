@@ -8,20 +8,13 @@ from bottle import route, run, request, abort, response
 from bottle import mako_view as view, mako_template as template
 from pymongo import Connection, GEO2D
 from bson import json_util
-from json import JSONEncoder
 from bson.objectid import ObjectId
+import mongo_encoder
+import server_reloader
 
 app = Bottle()
 
 j = []
-
-class MongoEncoder(JSONEncoder):
-    def default(self, obj, **kwargs):
-        if isinstance(obj, ObjectId):
-            return str(obj)
-        else:
-            return JSONEncoder.default(obj, **kwargs)
-
 
 connection = Connection('localhost', 27017)
 db = connection.mydatabase
@@ -81,7 +74,17 @@ def api():
         except geventwebsocket.WebSocketError, ex:
             print '%s: %s' % (ex.__class__.__name__, ex)
 
+def run_server():
+    if __name__ == '__main__':
+        http_server = WSGIServer(('127.0.0.1', 8080), app, \
+                handler_class=WebSocketHandler)
+        http_server.serve_forever()
+
+def print_reloading():
+        print 'Reloading code!'
+
+def main():
+    server_reloader.main(run_server, before_reload=print_reloading)
+
 if __name__ == '__main__':
-    http_server = WSGIServer(('127.0.0.1', 8080), app, \
-            handler_class=WebSocketHandler)
-    http_server.serve_forever()
+    main()
